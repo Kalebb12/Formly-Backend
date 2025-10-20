@@ -13,11 +13,12 @@ export const registerUser = async (req, res) => {
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(password, salt);
 
-    const user = await User.create({
+    const user = new User({
       name,
       email,
       passwordHash: hash,
     });
+    await user.save();
 
     signSetToken(user._id, "7d", res);
     res.status(201).json({ message: "User registered", userId: user._id });
