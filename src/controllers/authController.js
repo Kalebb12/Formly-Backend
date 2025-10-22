@@ -5,6 +5,8 @@ import sendEmail from "../utils/sendEmails.js";
 import { forgotPasswordTemplate } from "../templates/email.js";
 import passwordResetToken from "../models/passwordResetToken.js";
 import crypto from "crypto";
+import { sendVerificationEmail } from "../utils/sendVerificationEmail.js";
+import verificationToken from "../models/verificationToken.js";
 
 export const registerUser = async (req, res) => {
   try {
@@ -17,12 +19,13 @@ export const registerUser = async (req, res) => {
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(password, salt);
 
-    const user = new User({
+    const user = await User.create({
       name,
-      email,
+      email: email.toLowerCase(),
       passwordHash: hash,
     });
-    await user.save();
+
+    await sendVerificationEmail(user);
 
     signSetToken(user._id, "7d", res);
     res.status(201).json({ message: "User registered", userId: user._id });
@@ -66,7 +69,7 @@ export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
-    if (!user) throw new Error("User not found");
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     await passwordResetToken.deleteMany({ userId: user._id });
 
@@ -89,9 +92,6 @@ export const forgotPassword = async (req, res) => {
     res.status(200).json({ message: "Password reset email sent" });
   } catch (error) {
     console.error(error);
-    if (error.message === "User not found") {
-      return res.status(404).json({ message: "User not found" });
-    }
     res.status(500).json({ message: "Error processing password reset" });
   }
 };
@@ -113,7 +113,11 @@ export const passwordReset = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    user.passwordHash = newPassword; // hashed in pre-save;
+
+    const salt = bcrypt.genSaltSync(10);
+    const hash = bcrypt.hashSync(newPassword, salt);
+
+    user.passwordHash = hash; // hashed in pre-save;
     await user.save();
     await passwordResetToken.deleteMany({ userId: id });
 
@@ -121,6 +125,33 @@ export const passwordReset = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error processing password reset" });
+  }
+};
+
+export const verifyEmail = async (req, res) => {
+  try {
+    const { id, token } = req.body;
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.isVerified) {
+      return res.status(400).json({ message: "Email already verified" });
+    }
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    const verificationToken_ = await verificationToken.findOne({
+      userId: id,
+      token: hashedToken,
+    });
+    if (!verificationToken_) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+    user.isVerified = true;
+    await user.save();
+    await verificationToken.deleteMany({ userId: id });
+    res.status(200).json({ message: "Email verified successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error verifying email" });
   }
 };
 
