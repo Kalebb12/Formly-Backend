@@ -3,6 +3,7 @@ import crypto from "crypto";
 import verificationToken from "./verificationToken.js";
 import sendEmail from "../utils/sendEmails.js";
 import { verifyEmailTemplate } from "../templates/email.js";
+import bcrypt from "bcrypt";
 
 const userSchema = new mongoose.Schema(
   {
@@ -25,6 +26,19 @@ const userSchema = new mongoose.Schema(
     },
   }
 );
+
+userSchema.pre("save", async function (next) {
+  if (this.isModified("email")) {
+    this.email = this.email.toLowerCase();
+  }
+
+  if (this.isModified("passwordHash")) {
+    const salt = bcrypt.genSaltSync(10);
+    const hash = bcrypt.hashSync(this.passwordHash, salt);
+    this.passwordHash = hash;
+  }
+  next();
+});
 
 userSchema.post("save", async function (doc, next) {
   if (!doc.isVerified) {
