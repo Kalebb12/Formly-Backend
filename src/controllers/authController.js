@@ -155,6 +155,18 @@ export const verifyEmail = async (req, res) => {
   }
 };
 
+export const getUser = async (req,res) => {
+  try {
+    const user_id = req.user_id;
+    const user = await User.findById(user_id);
+    res.status(200).json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error getting user" });
+  }
+};
+
+
 const signSetToken = (id, expiresIn, res) => {
   const token = jwt.sign(
     {
