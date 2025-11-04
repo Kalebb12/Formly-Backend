@@ -128,9 +128,9 @@ export const submitResponse = async (req, res) => {
       return res.status(404).json({ message: "Form not found" });
     }
     const { answers } = req.body;
-    // if (!form.isPublished) {
-    //   return res.status(403).json({ message: "Form is not published" });
-    // }
+    if (!form.isPublished) {
+      return res.status(403).json({ message: "Form is not published" });
+    }
 
     if (!answers || !Array.isArray(answers) || answers.length === 0)
       return res.status(400).json({ message: "No answers provided" });
