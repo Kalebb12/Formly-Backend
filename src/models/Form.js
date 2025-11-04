@@ -26,6 +26,7 @@ const formSchema = new mongoose.Schema({
 formSchema.index({slug : 1}, {unique: true});
 
 formSchema.pre("save", async function (next) {
+  const baseUrl = process.env.CLIENT_URL;
   if (!this.slug || this.isModified("title")) {
     const rawSlug = slug(this.title, { lower: true });
     const shortId = crypto.randomBytes(3).toString("hex");
@@ -34,7 +35,6 @@ formSchema.pre("save", async function (next) {
   }
   
   if (this.isPublished) {
-    const baseUrl = process.env.CLIENT_URL;
     this.shareableUrl = `${baseUrl}/form/${this.slug}/submit`;
   }else {
     this.shareableUrl = null;

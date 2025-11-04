@@ -113,17 +113,35 @@ export const unpublishForm = async (req, res) => {
 export const submitResponse = async (req, res) => {
   try {
     const { formId } = req.params;
-    const { data } = req.body;
     const form = await Form.findById(formId);
     if (!form) {
       return res.status(404).json({ message: "Form not found" });
     }
-    if (!form.isPublished) {
-      return res.status(403).json({ message: "Form is not published" });
+    const  { answers }  = req.body;
+    // if (!form.isPublished) {
+    //   return res.status(403).json({ message: "Form is not published" });
+    // }
+
+    if (!answers || !Array.isArray(answers) || answers.length === 0)
+      return res.status(400).json({ message: "No answers provided" });
+
+    // Optional: Ensure all required fields are filled
+    const missingRequired = form.fields.filter(
+      (field) =>
+        field.required &&
+        !answers.some((ans) => ans.fieldId.toString() === field._id.toString())
+    );
+
+    if (missingRequired.length > 0) {
+      return res.status(400).json({
+        message: "Missing required fields",
+        missingFields: missingRequired.map((f) => f.label),
+      });
     }
+
     Response.create({
       form: formId,
-      answers: data,
+      answers: answers,
     });
     res.status(200).json({ message: "Response submitted" });
   } catch (error) {
@@ -131,3 +149,62 @@ export const submitResponse = async (req, res) => {
     res.status(500).json({ message: "Error submitting response" });
   }
 };
+
+export const editForm = async (req,res) => {
+  try {
+    const {formId} = req.params;
+    const {
+      title,
+      description,
+      fields, // [{id:x,name,....}]
+    } = req.body;
+    const user_id = req.user_id;
+
+    const form = await Form.findById(formId);
+    if (!form) {
+      return res.status(404).json({ message: "Form not found" });
+    }
+    if (!form.owner.equals(user_id)) {
+      return res.status(403).json({ message: "Not authorized to edit this form" });
+    }
+
+    if (title) form.title = title
+    if (description) form.description = description
+    if (fields) form.fields = fields.map((field) => {
+      if (field.id) {
+        const existingField = form.fields.find((f) => f.id === field.id);
+        if (existingField) {
+          existingField.name = field.name;
+          existingField.label = field.label;
+          existingField.fieldType = field.fieldType;
+          existingField.options = field.options;
+          existingField.required = field.required;
+          existingField.placeholder = field.placeholder;
+        }
+      }
+      return field;
+    })
+    await form.save();
+    res.status(200).json({ message: "Form edited", formId: form._id });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error editing form" });
+  }
+}
+
+export const getResponses = async (req,res) => {
+  try {
+    const {formId} = req.params;
+    const form = await Form.findById(formId);
+    if (!form) {
+      return res.status(404).json({ message: "Form not found" });
+    }
+    const responses = await Response.find({form:formId});
+    if (responses) {
+      res.status(200).json(responses);
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error getting response" });   
+  }
+}
