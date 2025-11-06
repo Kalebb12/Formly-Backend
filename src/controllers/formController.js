@@ -1,7 +1,7 @@
-import e from "express";
 import Form from "../models/Form.js";
 import Response from "../models/Response.js";
 import mongoose from "mongoose";
+import { computeFieldStats } from "../utils/computeFieldStats.js";
 
 export const createForm = async (req, res) => {
   try {
@@ -149,7 +149,7 @@ export const submitResponse = async (req, res) => {
       });
     }
 
-    Response.create({
+    await Response.create({
       form: formId,
       answers: answers,
     });
@@ -227,5 +227,98 @@ export const getResponses = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error getting response" });
+  }
+};
+
+export const getAnalytics = async (req, res) => {
+  try {
+    const user_id = req.user_id;
+    const { formId } = req.params;
+    const form = await Form.findById(formId);
+    if (!form) {
+      return res.status(404).json({ message: "Form not found" });
+    }
+    if (!form.owner.equals(user_id)) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to get analytics for this form" });
+    }
+    // TODO: probably check if user has pro access
+    const requiredFields = form.fields
+      .filter((f) => f.required)
+      .map((f) => f._id.toString());
+
+    // Fetch all responses for this form
+    const responses = await Response.find({ form: formId });
+    const totalFields = form.fields.length;
+
+    // Filter those where all required fields are answered
+
+    const totalResponses = responses.length;
+    let totalAnsweredCount = 0;
+
+    const detailedResponses = responses.map((response) => {
+      const answeredFieldIds = response.answers.map((a) =>
+        a.fieldId.toString()
+      );
+
+      // Count how many of the form’s fields exist in this response
+      const answeredFields = form.fields.filter((field) =>
+        answeredFieldIds.includes(field._id.toString())
+      ).length;
+
+      totalAnsweredCount += answeredFields;
+
+      const completionRate =
+        totalFields > 0 ? (answeredFields / totalFields) * 100 : 0;
+
+      return {
+        responseId: response._id,
+        answeredFields,
+        totalFields,
+        completionRate: completionRate.toFixed(2) + "%",
+      };
+    });
+
+    const averageCompletionRate =
+      responses.length > 0
+        ? (totalAnsweredCount / (responses.length * totalFields))
+        : 0;
+
+
+        // Here lies response over time :(
+    const responsesOverTime = await Response.aggregate([
+      { $match: { form: new mongoose.Types.ObjectId(formId) } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$submittedAt" ,} },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          date: "$_id",
+          count: 1,
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    const fieldStats = {};
+
+    for (const field of form.fields) {
+      fieldStats[field._id] = await computeFieldStats(field, formId);
+    }
+
+    res.status(200).json({
+      totalResponses,
+      averageCompletionRate: averageCompletionRate.toFixed(2),
+      responsesOverTime,
+      fieldStats,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error getting analytics" });
   }
 };
