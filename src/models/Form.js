@@ -15,7 +15,7 @@ const formSchema = new mongoose.Schema({
       required: { type: Boolean, default: false },
       placeholder: String,
     }
-  ], 
+  ],
   isPublished : { type: Boolean, default: false },
   slug: { type: String, unique: true },
   previewUrl: { type: String },

@@ -25,7 +25,7 @@ export const registerUser = async (req, res) => {
       passwordHash: hash,
     });
 
-    await sendVerificationEmail(user);
+    sendVerificationEmail(user);
 
     signSetToken(user._id, "7d", res);
     res.status(201).json({ message: "User registered", userId: user._id });

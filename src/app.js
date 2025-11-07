@@ -12,7 +12,6 @@ dotenv.config()
 const app = express();
 app.use("/stripe_webhooks", webhookRouter);
 
-
 app.use(cors());
 app.use(express.json())
 app.use(cookieParser())

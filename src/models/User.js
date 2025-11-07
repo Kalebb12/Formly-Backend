@@ -7,12 +7,20 @@ const userSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     isVerified: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
-    subscription:{
-      plan: {type:mongoose.Types.ObjectId, ref:"Plan"},
+    subscription: {
+      plan: {
+        type: mongoose.Types.ObjectId,
+        default: "690e09033c5ca7840e385e08",
+        ref: "Plan",
+      },
       stripeCustomerId: { type: String },
-      status: { type: String, enum: ["active", "inactive", "canceled"], default: "inactive" },
-      currentPeriodEnd: Date,      
-    }
+      status: {
+        type: String,
+        enum: ["active", "inactive", "canceled"],
+        default: "inactive",
+      },
+      currentPeriodEnd: Date,
+    },
   },
   {
     toJSON: {

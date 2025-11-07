@@ -7,7 +7,7 @@ export const checkFormLimit = async (req, res, next) => {
 
   const totalForms = await Form.countDocuments({ owner: user._id });
 
-  if (totalForms >= plan.limitForms) {
+  if (totalForms >= plan.formLimit) {
     return res.status(403).json({ message: "Form limit reached. Upgrade your plan." });
   }
 

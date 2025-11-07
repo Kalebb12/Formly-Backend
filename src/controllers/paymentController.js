@@ -50,13 +50,12 @@ export const handleStripeWebhook = async (req, res) => {
     const user = await User.findOne({ email: session.customer_email });
     if (!user) return res.status(404).send();
 
-    const plan = await Plan.findOne({ price: session.amount_total });
-
+    const plan = await Plan.findOne({ price: session.amount_total});
     user.subscription = {
       plan: plan._id,
       status: "active",
       stripeCustomerId: session.customer,
-      currentPeriodEnd: new Date(session.expires_at * 1000),
+      currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     };
 
     await user.save();
