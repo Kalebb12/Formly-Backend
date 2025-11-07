@@ -5,11 +5,14 @@ const userSchema = new mongoose.Schema(
     name: { type: String },
     email: { type: String, unique: true, required: true },
     passwordHash: { type: String, required: true },
-    plan: { type: String, enum: ["free", "pro"], default: "free" },
-    stripeCustomerId: { type: String },
-    subscriptionStatus: { type: String, default: "inactive" },
     isVerified: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
+    subscription:{
+      plan: {type:mongoose.Types.ObjectId, ref:"Plan"},
+      stripeCustomerId: { type: String },
+      status: { type: String, enum: ["active", "inactive", "canceled"], default: "inactive" },
+      currentPeriodEnd: Date,      
+    }
   },
   {
     toJSON: {
