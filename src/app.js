@@ -10,7 +10,7 @@ import planRoute from './routes/planRoute.js'
 
 dotenv.config()
 const app = express();
-app.use("/api/webhook", webhookRouter);
+app.use("/webhook", webhookRouter);
 
 
 app.use(cors());
@@ -19,7 +19,7 @@ app.use(cookieParser())
 
 app.use('/api/auth', authRouter)
 app.use('/api/form',formRoute)
-app.use('/api/plan',planRoute)
+app.use('/api/plans',planRoute)
 app.use('/api/checkout',paymentRoute)
 
 
