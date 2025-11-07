@@ -33,7 +33,6 @@ export const createCheckoutSession = async (req, res) => {
 };
 
 
-// controllers/webhookController.js
 export const handleStripeWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"];
   let event;

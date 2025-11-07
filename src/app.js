@@ -10,7 +10,7 @@ import planRoute from './routes/planRoute.js'
 
 dotenv.config()
 const app = express();
-app.use("/webhook", webhookRouter);
+app.use("/stripe_webhooks", webhookRouter);
 
 
 app.use(cors());
