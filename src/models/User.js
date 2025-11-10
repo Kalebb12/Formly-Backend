@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema(
       stripeCustomerId: { type: String },
       status: {
         type: String,
-        enum: ["active", "inactive", "canceled"],
+        enum: ["active", "inactive", "canceled","past_due"],
         default: "inactive",
       },
       currentPeriodEnd: Date,
