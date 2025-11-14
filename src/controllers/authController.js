@@ -38,11 +38,11 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
+    
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -68,7 +68,7 @@ export const logoutUser = (req, res) => {
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) return res.status(404).json({ message: "User not found" });
 
     await passwordResetToken.deleteMany({ userId: user._id });
@@ -155,7 +155,7 @@ export const verifyEmail = async (req, res) => {
   }
 };
 
-export const getUser = async (req,res) => {
+export const getUser = async (req, res) => {
   try {
     const user_id = req.user_id;
     const user = await User.findById(user_id);
@@ -165,7 +165,6 @@ export const getUser = async (req,res) => {
     res.status(500).json({ message: "Error getting user" });
   }
 };
-
 
 const signSetToken = (id, expiresIn, res) => {
   const token = jwt.sign(

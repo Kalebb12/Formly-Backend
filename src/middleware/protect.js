@@ -20,6 +20,7 @@ export const protect = async (req, res, next) => {
         .json({ message: "Not authorized, email not verified" });
     }
     req.user_id = user_id;
+    req.user_subscription = user.subscription;
     next();
   } catch (error) {
     console.error("Auth Error:", error.message);
