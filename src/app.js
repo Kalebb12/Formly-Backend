@@ -12,7 +12,11 @@ dotenv.config();
 const app = express();
 app.use("/stripe_webhooks", webhookRouter);
 
-app.use(cors());
+app.use(cors({
+    origin: "http://localhost:5173", // client url for dev
+    credentials: true,               // allow cookies
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 
