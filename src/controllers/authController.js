@@ -28,7 +28,7 @@ export const registerUser = async (req, res) => {
     sendVerificationEmail(user);
 
     signSetToken(user._id, "7d", res);
-    res.status(201).json({ message: "User registered", userId: user._id });
+    res.status(201).json({ message: "User registered", user: user });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error registering user" });
@@ -52,7 +52,7 @@ export const loginUser = async (req, res) => {
 
     res.status(201).json({
       message: "User logged in",
-      userId: user._id,
+      user: user,
     });
   } catch (error) {
     console.error(error);
