@@ -13,7 +13,7 @@ const app = express();
 app.use("/stripe_webhooks", webhookRouter);
 
 app.use(cors({
-    origin: "http://localhost:5173", // client url for dev
+    origin: ["http://localhost:5173","https://formly-frontend-three.vercel.app"], // client url for dev
     credentials: true,               // allow cookies
   })
 );
